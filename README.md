@@ -21,11 +21,12 @@ On release, automated continuous integration tests run the pipeline on a full-si
 
 ## Pipeline summary
 
-1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
-2. Generate reference indices ([`yara`](https://www.seqan.de/apps/yara.html))
-3. Map reads to reference ([`yara`](https://www.seqan.de/apps/yara.html))
-4. Run HLA typing ([`OptiType`](https://github.com/FRED-2/OptiType))
-5. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+1. Merge re-sequenced FastQ files ([`cat`](http://www.linfo.org/cat.html))
+2. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
+3. Generate reference indices ([`yara`](https://www.seqan.de/apps/yara.html))
+4. Map reads to reference ([`yara`](https://www.seqan.de/apps/yara.html))
+5. Run HLA typing ([`OptiType`](https://github.com/FRED-2/OptiType))
+6. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
 
 ## Quick Start
 

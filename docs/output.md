@@ -10,10 +10,23 @@ The directories listed below will be created in the results directory after the 
 
 The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes data using the following steps:
 
+- [cat](#cat) - Merge re-sequenced FastQ files
 - [FastQC](#fastqc) - Raw read QC
 - [OptiType](#optitype) - HLA genotyping based on integer linear programming
 - [MultiQC](#multiqc) - Aggregate report describing results from the whole pipeline
 - [Pipeline information](#pipeline-information) - Report metrics generated during the workflow execution
+
+### cat
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `fastq/`
+  - `*.merged.fastq.gz`: If `--save_merged_fastq` is specified, concatenated FastQ files will be placed in this directory.
+
+</details>
+
+If multiple libraries/runs have been provided for the same sample in the input samplesheet (e.g. to increase sequencing depth) then these will be merged at the very beginning of the pipeline in order to have consistent sample naming throughout the pipeline. Please refer to the [usage documentation](https://nf-co.re/rnaseq/usage#samplesheet-input) to see how to specify these samples in the input samplesheet.
 
 ### FastQC
 
