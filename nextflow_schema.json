@@ -101,6 +101,19 @@
                 }
             }
         },
+        "optional_outputs": {
+            "title": "Optional outputs",
+            "type": "object",
+            "description": "Additional output files produces as intermediates that can be saved",
+            "default": "",
+            "properties": {
+                "save_merged_fastq": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-save",
+                    "description": "Save FastQ files after merging re-sequenced libraries in the results directory."
+                }
+            }
+        },
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
