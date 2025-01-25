@@ -37,6 +37,7 @@ ch_multiqc_custom_methods_description = params.multiqc_methods_description ? fil
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
 include { samplesheetToList         } from 'plugin/nf-schema'
+include { checkSamplesAfterGrouping } from '../subworkflows/local/utils_nfcore_hlatyping_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -47,6 +48,7 @@ include { samplesheetToList         } from 'plugin/nf-schema'
 //
 // MODULE: Installed directly from nf-core/modules
 //
+include { CAT_FASTQ                   } from '../modules/nf-core/cat/fastq'
 include { FASTQC                      } from '../modules/nf-core/fastqc/main'
 include { MULTIQC                     } from '../modules/nf-core/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
@@ -72,22 +74,43 @@ workflow HLATYPING {
     ch_versions = Channel.empty()
 
     //
-    // SUBWORKFLOW: Read in samplesheet, validate and stage input files
+    // Create input channel from input file provided through params.input
     //
-    INPUT_CHECK (
-        ch_input
-    )
-    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+    Channel
+        .fromList(samplesheetToList(params.input, "assets/schema_input.json"))
+        .map {
+            meta, fastq_1, fastq_2, bam ->
+                if (bam) {
+                    return [ meta.id, meta + [ single_end:null, data_type:"bam" ], [ bam ] ]
+                } else if (!fastq_2) {
+                    return [ meta.id, meta + [ single_end:true, data_type:"fastq" ], [ fastq_1 ] ]
+                } else {
+                    return [ meta.id, meta + [ single_end:false, data_type:"fastq" ], [ fastq_1, fastq_2 ] ]
+                }
+        }
+        .groupTuple()
+        .map { samplesheet ->
+            checkSamplesAfterGrouping(samplesheet)
+        }
+        .branch {
+            meta, input_files ->
+                bam: meta.data_type == "bam"
+                    return [ meta, input_files.flatten() ]
+                fastq_single: input_files.size() == 1
+                    return [ meta, input_files.flatten() ]
+                fastq_multiple: input_files.size() > 1
+                    return [ meta, input_files.flatten() ]
+        }
+        .set { ch_input_files }
 
-    // Split by input type (bam/fastq)
-    INPUT_CHECK.out
-        .reads
-            .branch { meta, files ->
-                bam : meta.data_type == "bam"
-                fastq : meta.data_type == "fastq"
-            }
-            .set { ch_input_files }
 
+    //
+    // MODULE: Concatenate FastQ files from same sample if required
+    //
+    CAT_FASTQ(ch_input_files.fastq_multiple).reads
+    .mix(ch_input_files.fastq_single)
+    .set { ch_cat_fastq }
+    ch_versions = ch_versions.mix(CAT_FASTQ.out.versions.first().ifEmpty(null))
 
     // determine BAM pairedness for fastq conversion
     CHECK_PAIRED (ch_input_files.bam )
@@ -123,7 +146,7 @@ workflow HLATYPING {
         }
         .set { ch_filtered_bam2fq }
 
-    ch_input_files.fastq
+    ch_cat_fastq
         .mix(ch_filtered_bam2fq)
         .map { meta, reads ->
                 [ meta, file("$projectDir/data/references/hla_reference_${meta['seq_type']}.fasta") ]
@@ -135,7 +158,7 @@ workflow HLATYPING {
     // MODULE: Run FastQC
     //
     FASTQC (
-        ch_input_files.fastq
+        ch_cat_fastq
         .mix(ch_filtered_bam2fq)
     )
     ch_versions = ch_versions.mix(FASTQC.out.versions)
@@ -153,7 +176,7 @@ workflow HLATYPING {
     //
     // Map sample-specific reads and index
     //
-    ch_input_files.fastq
+    ch_cat_fastq
         .mix(ch_filtered_bam2fq)
         .cross(YARA_INDEX.out.index)
         .multiMap { reads, index ->
