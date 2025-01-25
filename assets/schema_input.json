@@ -1,5 +1,5 @@
 {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/nf-core/hlatyping/master/assets/schema_input.json",
     "title": "nf-core/hlatyping pipeline - params.input schema",
     "description": "Schema for the file provided with params.input",
@@ -15,6 +15,8 @@
             },
             "fastq_1": {
                 "type": "string",
+                "format": "file-path",
+                "exists": true,
                 "pattern": "^\\S+\\.f(ast)?q\\.gz$",
                 "errorMessage": "FastQ file for reads 1 must be provided, cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'",
                 "anyOf": [
@@ -26,49 +28,29 @@
                         "type": "string",
                         "maxLength": 0
                     }
-                ],
-                "format": "file-path",
-                "exists": true
+                ]
             },
             "fastq_2": {
-                "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'",
-                "anyOf": [
-                    {
-                        "type": "string",
-                        "pattern": "^\\S+\\.f(ast)?q\\.gz$"
-                    },
-                    {
-                        "type": "string",
-                        "maxLength": 0
-                    }
-                ],
+                "type": "string",
                 "format": "file-path",
-                "exists": true
+                "exists": true,
+                "pattern": "^\\S+\\.f(ast)?q\\.gz$",
+                "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
             },
             "bam": {
-                "errorMessage": "BAM file cannot contain spaces and must have extension '.bam'",
-                "anyOf": [
-                    {
-                        "type": "string",
-                        "pattern": "^\\S+\\.bam$"
-                    },
-                    {
-                        "type": "string",
-                        "maxLength": 0
-                    }
-                ],
+                "type": "string",
                 "format": "file-path",
-                "exists": true
+                "exists": true,
+                "pattern": "^\\S+\\.bam$",
+                "errorMessage": "BAM file cannot contain spaces and must have extension '.bam'"
             },
             "seq_type": {
-                "errorMessage": "Sequencing type must be one of the following: 'dna', 'rna'",
-                "enum": ["dna","rna"],
-                "meta": ["seq_type"]
+                "type": "string",
+                "enum": ["dna", "rna"],
+                "meta": ["seq_type"],
+                "errorMessage": "Sequencing type (seq_type) must be one of the following: 'dna', 'rna'"
             }
         },
-        "required": ["sample","seq_type"],
-        "dependentRequired": {
-            "fastq_2": ["fastq_1"]
-        }
+        "required": ["sample", "seq_type"]
     }
 }
